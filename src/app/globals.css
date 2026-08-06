@@ -1,26 +1,152 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --background: #FFFDF7;
+  --foreground: #2D2A26;
+  --card: #FFFAF2;
+  --card-foreground: #2D2A26;
+  --popover: #FFFAF2;
+  --popover-foreground: #2D2A26;
+  --primary: #2D2A26;
+  --primary-foreground: #FFFDF7;
+  --secondary: #F5F0E8;
+  --secondary-foreground: #2D2A26;
+  --muted: #F5F0E8;
+  --muted-foreground: #7A756D;
+  --accent: #EBF5E8;
+  --accent-foreground: #3A5C30;
+  --destructive: #C44D4D;
+  --border: #E5E0D5;
+  --input: #E5E0D5;
+  --ring: #8B7355;
+  --radius: 0.75rem;
+  --chart-1: #4A7C3F;
+  --chart-2: #8B7355;
+  --chart-3: #D4A96A;
+  --chart-4: #E8C9A0;
+  --chart-5: #2D2A26;
+  --sidebar: #FFFDF7;
+  --sidebar-foreground: #2D2A26;
+  --sidebar-primary: #2D2A26;
+  --sidebar-primary-foreground: #FFFDF7;
+  --sidebar-accent: #F5F0E8;
+  --sidebar-accent-foreground: #2D2A26;
+  --sidebar-border: #E5E0D5;
+  --sidebar-ring: #8B7355;
+}
+
+.dark {
+  --background: #1A1816;
+  --foreground: #EDEAE5;
+  --card: #242220;
+  --card-foreground: #EDEAE5;
+  --popover: #242220;
+  --popover-foreground: #EDEAE5;
+  --primary: #D4A96A;
+  --primary-foreground: #1A1816;
+  --secondary: #2E2B27;
+  --secondary-foreground: #EDEAE5;
+  --muted: #2E2B27;
+  --muted-foreground: #9A948C;
+  --accent: #2E3A2A;
+  --accent-foreground: #A8D69A;
+  --destructive: #E06C6C;
+  --border: #2E2B27;
+  --input: #2E2B27;
+  --ring: #D4A96A;
+  --chart-1: #A8D69A;
+  --chart-2: #D4A96A;
+  --chart-3: #8B7355;
+  --chart-4: #E8C9A0;
+  --chart-5: #EDEAE5;
+  --sidebar: #1A1816;
+  --sidebar-foreground: #EDEAE5;
+  --sidebar-primary: #D4A96A;
+  --sidebar-primary-foreground: #1A1816;
+  --sidebar-accent: #2E2B27;
+  --sidebar-accent-foreground: #EDEAE5;
+  --sidebar-border: #2E2B27;
+  --sidebar-ring: #D4A96A;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Real Holstein cow patches — irregular, disconnected, varying shapes, subtle transparency */
+.cow-patch-bg {
+  background-color: #FFFAF2;
+  position: relative;
+}
+
+.cow-patch-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 900'%3E%3C!-- Long streaky patch top-left --%3E%3Cpath fill='%232D2A26' opacity='0.04' d='M-20-20c60 30 40 120 80 180c-20 50 10 100-30 160c50 40 30 90 20 150c-10 40 30 70 10 120l-30 50c-30-10-60 0-80-30c-10-20-30-60-10-90c-20-40 10-70-10-110c30-50-10-80 10-130c-20-60 20-100-10-160c30-40 10-80 20-130Z'/%3E%3C!-- Round blob mid-left --%3E%3Cellipse cx='120' cy='500' rx='90' ry='110' fill='%232D2A26' opacity='0.045' transform='rotate(-8 120 500)'/%3E%3C!-- Streaky patch right side long --%3E%3Cpath fill='%232D2A26' opacity='0.04' d='M1220-20c-40 50-30 130-80 180c30 60 10 140-40 190c50 30 30 100-10 160c40 50 30 130-20 180c50 40 20 110-20 150c30 50 50 30 70-10c40-50-10-120 30-160c-20-60 20-100 0-150c30-50-10-90 20-130c-40-60 0-110-10-170c30-50 10-110 30-150l10-10c-30-30-20-80 10-110Z'/%3E%3C!-- Round blob right side --%3E%3Cellipse cx='1080' cy='380' rx='100' ry='80' fill='%232D2A26' opacity='0.035' transform='rotate(12 1080 380)'/%3E%3C!-- Medium blob bottom-left --%3E%3Cellipse cx='200' cy='820' rx='120' ry='90' fill='%232D2A26' opacity='0.04' transform='rotate(-20 200 820)'/%3E%3C!-- Small irregular patch bottom center --%3E%3Cpath fill='%232D2A26' opacity='0.035' d='M500 850c30-10 60 0 90-30c-10 40 20 80-10 110c30 20 10 50-20 60c-40-10-30-50-60-70c-20 10-40-20-30-40c20-10 10-20 30-30z'/%3E%3C!-- Corner patch bottom-right --%3E%3Cpath fill='%232D2A26' opacity='0.04' d='M1000 700c50 30 40 80 80 120c-30 40 0 90-40 130c40 20 30 60-10 70c-40-10-50 30-70-10c-20-30 10-70-20-110c-30-40 10-80 0-130c30-20 10-60 40-80z'/%3E%3C!-- Small dot patches scattered --%3E%3Cellipse cx='350' cy='250' rx='35' ry='45' fill='%232D2A26' opacity='0.03' transform='rotate(25 350 250)'/%3E%3Cellipse cx='750' cy='150' rx='40' ry='55' fill='%232D2A26' opacity='0.03' transform='rotate(-15 750 150)'/%3E%3Cellipse cx='900' cy='650' rx='50' ry='40' fill='%232D2A26' opacity='0.035' transform='rotate(10 900 650)'/%3E%3Cellipse cx='80' cy='700' rx='45' ry='35' fill='%232D2A26' opacity='0.03' transform='rotate(-5 80 700)'/%3E%3C!-- Long thin patch --%3E%3Cpath fill='%232D2A26' opacity='0.03' d='M550 300c20-10 50 0 80-20c10 30-20 50-40 80c-30 10-50-30-60-20c-10 20 10-20 20-40z'/%3E%3C/svg%3E");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* Cards stay clean — no patches */
+.cow-patch-card {
+  /* reserved for future use — cards are clean now */
 }
