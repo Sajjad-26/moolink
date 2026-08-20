@@ -7,7 +7,6 @@ import { fetchMonthlyRevenue } from '@/lib/revenuecat';
 import {
   getMonthBounds,
   round2,
-  DEFAULT_COMMISSION_RATE,
   MAX_COMMISSION_RATE,
 } from '@/lib/commissions';
 import type { CommissionData, CommissionPeriod, MyTransaction } from '@/lib/types';
@@ -17,6 +16,22 @@ function adminClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
+}
+
+/** Get the global default commission rate from admin settings (default 0.30) */
+export async function getGlobalCommissionRate(): Promise<number> {
+  const admin = adminClient();
+  const { data } = await admin
+    .from('admin_settings')
+    .select('value')
+    .eq('key', 'default_commission_rate')
+    .maybeSingle();
+  
+  if (data?.value) {
+    const parsed = Number(data.value);
+    if (!isNaN(parsed)) return parsed;
+  }
+  return 0.30;
 }
 
 /** Toggle whether the current user participates in the commission pool. */
@@ -35,7 +50,7 @@ export async function setAffiliateStatus(enabled: boolean): Promise<{ success?: 
   // creator is earn-ready immediately (the admin can lower it per-creator).
   const update: { is_affiliate: boolean; commission_rate?: number } = { is_affiliate: enabled };
   if (enabled && profile?.commission_rate == null) {
-    update.commission_rate = DEFAULT_COMMISSION_RATE;
+    update.commission_rate = await getGlobalCommissionRate();
   }
 
   const { error } = await supabase
@@ -297,6 +312,7 @@ export type AdminAffiliate = {
   clicks30d: number;
   sales30d: number;
   commission30d: number;
+  isArchived: boolean;
 };
 
 export type AdminTransaction = {
@@ -328,8 +344,7 @@ export async function getAffiliatesForAdmin(period?: string): Promise<AdminAffil
 
   const { data: affiliates } = await supabase
     .from('profiles')
-    .select('id, username, display_name, commission_rate')
-    .eq('is_affiliate', true)
+    .select('id, username, display_name, commission_rate, is_archived, is_affiliate')
     .neq('is_admin', true);
 
   const since = new Date();
@@ -364,6 +379,7 @@ export async function getAffiliatesForAdmin(period?: string): Promise<AdminAffil
   }
 
   return (affiliates ?? [])
+    .filter(a => a.is_affiliate || a.is_archived)
     .map(a => ({
       profileId: a.id,
       username: a.username,
@@ -372,6 +388,7 @@ export async function getAffiliatesForAdmin(period?: string): Promise<AdminAffil
       clicks30d: clicksByProfile[a.id] ?? 0,
       sales30d: salesByProfile[a.id]?.count ?? 0,
       commission30d: round2(salesByProfile[a.id]?.commission ?? 0),
+      isArchived: a.is_archived ?? false,
     }))
     .sort((a, b) => b.sales30d - a.sales30d || b.clicks30d - a.clicks30d);
 }
@@ -447,4 +464,94 @@ export async function setCreatorRate(profileId: string, rate: number): Promise<{
   if (error) return { error: error.message };
   revalidatePath('/admin');
   return { success: true };
+}
+
+/** Admin-only: set the global default commission rate. */
+export async function setGlobalCommissionRate(rate: number): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: myProfile } = await supabase
+    .from('profiles')
+    .select('is_admin')
+    .eq('user_id', user.id)
+    .single();
+  if (!myProfile?.is_admin) return { error: 'Forbidden' };
+
+  if (typeof rate !== 'number' || isNaN(rate) || rate < 0 || rate > MAX_COMMISSION_RATE) {
+    return { error: `Rate must be between 0 and ${Math.round(MAX_COMMISSION_RATE * 100)}%.` };
+  }
+
+  const admin = adminClient();
+  const { error } = await admin
+    .from('admin_settings')
+    .upsert({ key: 'default_commission_rate', value: String(rate) }, { onConflict: 'key' });
+
+  if (error) return { error: error.message };
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+/** Admin-only: Archive a creator (suspends affiliate and public profile) */
+export async function archiveCreator(profileId: string, archive: boolean): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: myProfile } = await supabase.from('profiles').select('is_admin').eq('user_id', user.id).single();
+  if (!myProfile?.is_admin) return { error: 'Forbidden' };
+
+  const admin = adminClient();
+  const { error } = await admin.from('profiles').update({ is_archived: archive, is_affiliate: !archive }).eq('id', profileId);
+  if (error) return { error: error.message };
+  
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+/** Admin-only: Permanently delete a creator (cascades to clicks, views, sales) */
+export async function deleteCreator(profileId: string): Promise<{ success?: boolean; error?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Not authenticated' };
+
+  const { data: myProfile } = await supabase.from('profiles').select('is_admin').eq('user_id', user.id).single();
+  if (!myProfile?.is_admin) return { error: 'Forbidden' };
+
+  const admin = adminClient();
+  
+  // Need to get user_id to delete auth user, but for now we just delete the profile.
+  // Deleting the profile will cascade delete links, click_events, page_views, affiliate_sales.
+  const { error } = await admin.from('profiles').delete().eq('id', profileId);
+  if (error) return { error: error.message };
+
+  revalidatePath('/admin');
+  return { success: true };
+}
+
+/** Admin-only: Fetch full dashboard data for a specific creator */
+export async function getCreatorDetailData(profileId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+
+  const { data: myProfile } = await supabase.from('profiles').select('is_admin').eq('user_id', user.id).single();
+  if (!myProfile?.is_admin) throw new Error('Forbidden');
+
+  const admin = adminClient();
+  
+  const [{ data: links }, { data: clicks }, { data: sales }, { data: views }] = await Promise.all([
+    admin.from('links').select('*').eq('profile_id', profileId).order('order_index'),
+    admin.from('click_events').select('id, link_id, created_at').eq('profile_id', profileId),
+    admin.from('affiliate_sales').select('*').eq('profile_id', profileId).in('event_type', ['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']).order('purchased_at', { ascending: false }),
+    admin.from('page_views').select('id, created_at').eq('profile_id', profileId)
+  ]);
+
+  return {
+    links: links || [],
+    clicks: clicks || [],
+    sales: sales || [],
+    views: views || []
+  };
 }

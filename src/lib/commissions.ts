@@ -1,6 +1,5 @@
 // Pure commission math — no I/O so it stays easy to reason about and test.
 
-export const DEFAULT_COMMISSION_RATE = 0.3;
 export const MAX_COMMISSION_RATE = 0.3;
 
 export type CommissionRow = {

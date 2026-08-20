@@ -12,6 +12,7 @@ export type Profile = {
   is_affiliate: boolean;
   is_admin: boolean;
   commission_rate: number | null;
+  is_archived: boolean;
   created_at: string;
 };
 

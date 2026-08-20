@@ -4,23 +4,28 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Input } from '@/components/ui/input';
 import { toast, Toaster } from '@/components/ui/toast';
 import {
   getCommissionHistory,
   markCommissionPeriodPaid,
   getAffiliatesForAdmin,
-  getAllTransactionsForAdmin,
-  setCreatorRate,
+  getGlobalCommissionRate,
+  setGlobalCommissionRate,
   getCommissionData,
   type AdminAffiliate,
-  type AdminTransaction,
 } from '@/app/dashboard/earnings-actions';
 import { formatMoney } from '@/lib/commissions';
 import type { CommissionPeriod, CommissionData } from '@/lib/types';
 import {
   Wallet, Users, MousePointerClick, Coins, Percent, Loader2, Check, X,
-  Save, ChevronLeft, ChevronRight, ArrowLeft, ShoppingCart, ShieldCheck
+  Save, ChevronLeft, ChevronRight, ArrowLeft, ShieldCheck, Settings
 } from 'lucide-react';
 import { lastNMonths } from '@/lib/commissions';
 
@@ -30,26 +35,25 @@ export function AdminPage() {
   const [data, setData] = useState<CommissionData | null>(null);
   const [periods, setPeriods] = useState<CommissionPeriod[]>([]);
   const [affiliates, setAffiliates] = useState<AdminAffiliate[]>([]);
-  const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingPeriod, setSavingPeriod] = useState<string | null>(null);
-  const [savingRate, setSavingRate] = useState<string | null>(null);
-  const [rateInputs, setRateInputs] = useState<Record<string, string>>({});
+  const [globalRate, setGlobalRate] = useState<string>('30');
+  const [savingGlobalRate, setSavingGlobalRate] = useState(false);
+  const [sortBy, setSortBy] = useState<'commission' | 'clicks' | 'sales'>('commission');
 
   const load = async () => {
     setLoading(true);
     try {
-      const [commissionData, history, affs, txs] = await Promise.all([
+      const [commissionData, history, affs, globalRateValue] = await Promise.all([
         getCommissionData(period),
         getCommissionHistory(),
         getAffiliatesForAdmin(),
-        getAllTransactionsForAdmin(period),
+        getGlobalCommissionRate(),
       ]);
       setData(commissionData);
       setPeriods(history);
       setAffiliates(affs);
-      setTransactions(txs);
-      setRateInputs(Object.fromEntries(affs.map(a => [a.profileId, String(Math.round(a.rate * 100))])));
+      setGlobalRate(String(Math.round(globalRateValue * 100)));
     } finally {
       setLoading(false);
     }
@@ -70,19 +74,26 @@ export function AdminPage() {
     } finally { setSavingPeriod(null); }
   };
 
-  const handleSaveRate = async (a: AdminAffiliate) => {
-    const value = Number(rateInputs[a.profileId]);
+  const handleSaveGlobalRate = async () => {
+    const value = Number(globalRate);
     if (isNaN(value) || value < 0 || value > 30) {
       toast.add({ title: 'Invalid rate', description: 'Enter a rate between 0 and 30.', type: 'error' });
       return;
     }
-    setSavingRate(a.profileId);
+    setSavingGlobalRate(true);
     try {
-      const result = await setCreatorRate(a.profileId, value / 100);
+      const result = await setGlobalCommissionRate(value / 100);
       if (result?.error) toast.add({ title: 'Error', description: result.error, type: 'error' });
-      else { toast.add({ title: `Rate set to ${value}%`, type: 'success' }); load(); }
-    } finally { setSavingRate(null); }
+      else { toast.add({ title: `Global rate set to ${value}%`, type: 'success' }); load(); }
+    } finally { setSavingGlobalRate(false); }
   };
+
+  const sortedAffiliates = [...affiliates].sort((a, b) => {
+    if (sortBy === 'commission') return b.commission30d - a.commission30d;
+    if (sortBy === 'clicks') return b.clicks30d - a.clicks30d;
+    if (sortBy === 'sales') return b.sales30d - a.sales30d;
+    return 0;
+  });
 
   if (loading && !data) {
     return (
@@ -95,7 +106,7 @@ export function AdminPage() {
   const d = data;
   const currency = d?.revenue?.currency ?? 'USD';
   const totalCommission = d?.affiliates.reduce((s, a) => s + a.commission, 0) ?? 0;
-  const totalSales = d?.affiliates.reduce((s, a) => s + a.sales, 0) ?? transactions.length;
+  const totalSales = d?.affiliates.reduce((s, a) => s + a.sales, 0) ?? 0;
   const totalClicks = d?.affiliates.reduce((s, a) => s + a.clicks, 0) ?? 0;
 
   return (
@@ -183,124 +194,110 @@ export function AdminPage() {
           </Card>
         </div>
 
-        {/* All Subscriber Transactions Table */}
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-amber-700" /> Transactions ({transactions.length}) — {period}
-              </CardTitle>
-              <Button size="xs" variant="outline" onClick={load} className="h-7 text-xs">
-                Refresh
+
+        {/* Global Settings */}
+        <Card className="border-amber-200 bg-amber-50/50 shadow-sm">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 rounded-lg">
+                <Settings className="w-5 h-5 text-amber-700" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-amber-950">Global Default Commission Rate</h3>
+                <p className="text-xs text-amber-700/80">Applied automatically to all new creators and creators without a custom rate.</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 bg-white border border-amber-200 rounded-md px-2 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all">
+                <Input
+                  type="number" min={0} max={30}
+                  value={globalRate}
+                  onChange={e => setGlobalRate(e.target.value)}
+                  className="h-9 w-16 text-sm font-bold border-0 focus-visible:ring-0 px-1 text-right"
+                />
+                <span className="text-sm font-bold text-muted-foreground">%</span>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleSaveGlobalRate}
+                disabled={savingGlobalRate}
+                className="h-9 bg-amber-700 hover:bg-amber-800 text-white shadow-sm"
+              >
+                {savingGlobalRate ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : <Save className="w-4 h-4 mr-1.5" />}
+                Save
               </Button>
             </div>
-            <CardDescription className="text-xs">
-              Every purchase recorded from the RevenueCat webhook, mapped to the attributed creator.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {transactions.length === 0 ? (
-              <div className="text-sm text-muted-foreground py-6 text-center">
-                No transactions recorded for {period} yet.
+          </CardContent>
+        </Card>
+
+        {/* Creator Directory (Redesigned) */}
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Users className="w-4 h-4 text-amber-700" /> Best Performers — {period}
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground font-semibold">Sort by:</span>
+                <select 
+                  value={sortBy} 
+                  onChange={e => setSortBy(e.target.value as any)}
+                  className="text-xs bg-muted/50 border border-border rounded-md px-2 py-1 outline-none font-semibold cursor-pointer"
+                >
+                  <option value="commission">Highest Commission</option>
+                  <option value="sales">Most Sales</option>
+                  <option value="clicks">Most Clicks</option>
+                </select>
+                <Button size="xs" variant="outline" onClick={load} className="h-7 text-xs">
+                  Refresh
+                </Button>
               </div>
+            </div>
+          </CardHeader>
+          <CardContent className="px-0 sm:px-6">
+            {sortedAffiliates.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4 px-4 text-center">No creators found.</p>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full text-xs">
+                <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-border/80 text-muted-foreground text-left">
-                      <th className="py-2 pr-3 font-semibold">Date</th>
-                      <th className="py-2 px-3 font-semibold">Creator / Ref</th>
-                      <th className="py-2 px-3 font-semibold">Type</th>
-                      <th className="py-2 px-3 font-semibold text-right">Price</th>
-                      <th className="py-2 pl-3 font-semibold text-right">30% Commission</th>
+                      <th className="py-2 px-3 font-semibold">Creator</th>
+                      <th className="py-2 px-3 font-semibold text-right">Clicks (30d)</th>
+                      <th className="py-2 px-3 font-semibold text-right">Sales (30d)</th>
+                      <th className="py-2 px-3 font-semibold text-right">Commission (30d)</th>
+                      <th className="py-2 px-3 font-semibold text-right">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-muted/40">
-                    {transactions.map(t => (
-                      <tr key={t.id} className="hover:bg-muted/30">
-                        <td className="py-2.5 pr-3 text-muted-foreground whitespace-nowrap">
-                          {new Date(t.purchased_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    {sortedAffiliates.map(a => (
+                      <tr 
+                        key={a.profileId} 
+                        className="hover:bg-muted/30 transition-colors cursor-pointer group" 
+                        onClick={() => window.location.href = `/admin/creator/${a.username}`}
+                      >
+                        <td className="py-3 px-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-amber-800 group-hover:underline decoration-amber-300 underline-offset-2">@{a.username}</span>
+                              <span className="text-xs text-muted-foreground">{a.displayName}</span>
+                            </div>
+                          </div>
                         </td>
-                        <td className="py-2.5 px-3 font-semibold">
-                          {t.username ? (
-                            <span className="text-amber-800 font-mono">@{t.username}</span>
-                          ) : t.ref ? (
-                            <span className="text-neutral-500 font-mono">@{t.ref} (unmatched)</span>
+                        <td className="py-3 px-3 text-right font-medium">{a.clicks30d.toLocaleString()}</td>
+                        <td className="py-3 px-3 text-right font-medium">{a.sales30d.toLocaleString()}</td>
+                        <td className="py-3 px-3 text-right font-bold text-amber-700">{formatMoney(a.commission30d, currency)}</td>
+                        <td className="py-3 px-3 text-right">
+                          {a.isArchived ? (
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-zinc-100 text-zinc-600 border-zinc-300">Archived</span>
                           ) : (
-                            <span className="text-muted-foreground">Direct (No Ref)</span>
+                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-600 border-emerald-200">Active</span>
                           )}
-                        </td>
-                        <td className="py-2.5 px-3 text-muted-foreground uppercase text-[10px] font-mono">
-                          {t.event_type}
-                        </td>
-                        <td className="py-2.5 px-3 text-right font-medium">
-                          {formatMoney(t.price, t.currency)}
-                        </td>
-                        <td className="py-2.5 pl-3 text-right font-bold text-amber-700">
-                          {formatMoney(t.commission, t.currency)}
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Creators table */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-bold flex items-center gap-2">
-              <Users className="w-4 h-4 text-amber-700" /> Creators — {period}
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Per-creator clicks, new subscribers and earned commission. Rates only affect future payouts.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {affiliates.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-2">No opted-in creators yet.</p>
-            ) : (
-              <div className="divide-y divide-muted/40 text-sm">
-                {affiliates.map(a => (
-                  <div key={a.profileId} className="flex items-center justify-between py-2.5 gap-2">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="font-semibold truncate">@{a.username}</span>
-                      <span className="text-xs text-muted-foreground truncate">{a.displayName}</span>
-                    </div>
-                    <div className="flex items-center gap-4 flex-shrink-0">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1 min-w-[70px]">
-                        <MousePointerClick className="w-3 h-3" /> {a.clicks30d.toLocaleString()} clicks
-                      </span>
-                      <span className="text-xs font-semibold flex items-center gap-1 min-w-[70px]">
-                        <ShoppingCart className="w-3 h-3 text-amber-600" /> {a.sales30d} sales
-                      </span>
-                      <span className="text-xs font-bold text-amber-700 min-w-[75px] text-right">
-                        {formatMoney(a.commission30d, currency)}
-                      </span>
-                      <div className="w-16">
-                        <div className="flex items-center gap-1">
-                          <Input
-                            type="number" min={0} max={30}
-                            value={rateInputs[a.profileId] ?? String(Math.round(a.rate * 100))}
-                            onChange={e => setRateInputs(prev => ({ ...prev, [a.profileId]: e.target.value }))}
-                            className="h-7 w-12 text-xs font-semibold"
-                          />
-                          <span className="text-xs font-bold text-muted-foreground">%</span>
-                        </div>
-                      </div>
-                      <Button
-                        size="xs" variant="outline"
-                        onClick={() => handleSaveRate(a)}
-                        disabled={savingRate === a.profileId}
-                        className="h-7"
-                      >
-                        {savingRate === a.profileId ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
               </div>
             )}
           </CardContent>
@@ -324,25 +321,32 @@ export function AdminPage() {
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">{p.period}</span>
                       <span className="text-xs text-muted-foreground">
-                        {d?.revenue ? `${formatMoney(d.revenue.proceeds, d.revenue.currency)} net revenue` : ''}
+                        {(() => {
+                          const [y, m] = p.period.split('-');
+                          const expectedPayoutDate = new Date(Number(y), Number(m), 10);
+                          return `(Expected payout: ${expectedPayoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})`;
+                        })()}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2.5">
-                      <span className="font-bold text-amber-700 w-24 text-right">{formatMoney(p.total_pool, p.currency)}</span>
-                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full border ${
-                        p.is_paid ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'
-                      }`}>
-                        {p.is_paid ? 'Paid' : 'Unpaid'}
-                      </span>
-                      <Button
-                        size="xs" variant="outline"
-                        onClick={() => handleToggle(p, !p.is_paid)}
-                        disabled={savingPeriod === p.period}
-                        className="h-7"
-                      >
-                        {savingPeriod === p.period ? <Loader2 className="w-3 h-3 animate-spin" /> : (p.is_paid ? <X className="w-3 h-3" /> : <Check className="w-3 h-3" />)}
-                      </Button>
-                    </div>
+                      <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2.5">
+                        <span className="font-bold text-amber-700 sm:w-24 text-right">{formatMoney(p.total_pool, p.currency)}</span>
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[11px] font-extrabold uppercase px-3 py-1 rounded-full border shadow-sm ${
+                            p.is_paid ? 'bg-emerald-100 text-emerald-800 border-emerald-300' : 'bg-rose-100 text-rose-800 border-rose-300'
+                          }`}>
+                            {p.is_paid ? '✓ PAID' : 'UNPAID'}
+                          </span>
+                          <Button
+                            size="xs" variant={p.is_paid ? "outline" : "default"}
+                            onClick={() => handleToggle(p, !p.is_paid)}
+                            disabled={savingPeriod === p.period}
+                            className={`h-7 px-3 text-[10px] font-bold ${!p.is_paid && 'bg-amber-800 hover:bg-amber-900 text-white'}`}
+                          >
+                            {savingPeriod === p.period ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : (p.is_paid ? <X className="w-3 h-3 mr-1" /> : <Check className="w-3 h-3 mr-1" />)}
+                            {p.is_paid ? 'Undo' : 'Mark Paid'}
+                          </Button>
+                        </div>
+                      </div>
                   </div>
                 ))}
               </div>

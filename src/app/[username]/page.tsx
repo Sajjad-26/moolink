@@ -10,6 +10,8 @@ import { detectOS } from '@/lib/device';
 import { THEMES, getTheme, type ThemeId } from '@/lib/themes';
 import { HapticLink } from '@/components/haptic-link';
 
+import { AutoCopyRef } from '@/components/auto-copy-ref';
+
 export const revalidate = 60;
 
 async function trackPageView(profileId: string, refTag?: string) {
@@ -63,7 +65,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { username } = await params;
   const profile = await getProfile(username);
-  if (!profile) return { title: 'Not Found' };
+  if (!profile || profile.is_archived) return { title: 'Not Found' };
 
   const title = profile.display_name || username;
   const description = profile.bio || `${title} on MooLink`;
@@ -101,7 +103,7 @@ export default async function ProfilePage({
   const { username } = await params;
   const { ref } = await searchParams;
   const profile = await getProfile(username);
-  if (!profile) notFound();
+  if (!profile || profile.is_archived) notFound();
 
   const links = await getLinks(profile.id);
   // Fire-and-forget tracking (non-blocking) with campaign ref support
@@ -127,6 +129,7 @@ export default async function ProfilePage({
         backgroundPosition: 'center',
       }}
     >
+      {ref && <AutoCopyRef refTag={ref} />}
       {/* Holstein patches — only on classic moo theme */}
       {(profile.theme === 'classic-moo' || !profile.theme) && (
         <div className="absolute inset-0 pointer-events-none cow-patch-bg" />

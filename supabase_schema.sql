@@ -100,9 +100,13 @@ create table if not exists public.affiliate_sales (
   proceeds numeric(12,2) not null default 0,
   commission numeric(12,2) not null default 0,
   period text not null,                       -- 'YYYY-MM' UTC month of the sale
+  payout_status text not null default 'pending', -- 'pending' | 'paid'
   purchased_at timestamptz not null,
   created_at timestamptz not null default now()
 );
+
+-- Add payout_status if table already existed
+alter table public.affiliate_sales add column if not exists payout_status text not null default 'pending';
 
 -- ============================================================
 -- INDEXES
@@ -297,3 +301,23 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ============================================================
+-- ADMIN SETTINGS TABLE (Global config)
+-- ============================================================
+create table if not exists public.admin_settings (
+  key text primary key,
+  value jsonb not null
+);
+
+-- Enable RLS and deny access to all by default (Service Role will bypass this)
+alter table public.admin_settings enable row level security;
+
+insert into public.admin_settings (key, value)
+values ('default_commission_rate', '"0.30"')
+on conflict (key) do nothing;
+
+-- ============================================================
+-- ARCHIVE CREATORS
+-- ============================================================
+alter table public.profiles add column if not exists is_archived boolean not null default false;

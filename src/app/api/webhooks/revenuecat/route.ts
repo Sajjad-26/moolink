@@ -97,9 +97,11 @@ export async function POST(request: Request) {
     }
 
     if (event && SALE_EVENTS.has(type)) {
-      const rawPrice = event.price_in_purchased_currency ?? event.price ?? 0;
+      // Always use the USD equivalent price provided by RevenueCat for accurate global math
+      const rawPrice = event.price ?? event.price_in_purchased_currency ?? 0;
       const price = Number(rawPrice);
-      const currency = event.currency ?? 'USD';
+      // We force currency to USD in the DB since 'price' is the USD equivalent
+      const currency = 'USD';
       const purchasedAt = event.purchased_at_ms ?? event.event_timestamp_ms;
       const purchasedAtDate = purchasedAt ? new Date(Number(purchasedAt)) : new Date();
       const period = `${purchasedAtDate.getUTCFullYear()}-${String(purchasedAtDate.getUTCMonth() + 1).padStart(2, '0')}`;
@@ -139,7 +141,13 @@ export async function POST(request: Request) {
 
       // Commission only on the FIRST paid transaction (new subscribers), not renewals.
       const isCommissionable = COMMISSIONABLE_EVENTS.has(type);
-      const commission = isCommissionable && profileId ? round2(proceeds * rate) : 0;
+      
+      if (!profileId) {
+        console.log(`[RevenueCat Webhook] Skipped direct/non-referred sale (ref: ${ref || 'none'})`);
+        return NextResponse.json({ received: true, skipped: true, reason: 'non-referred' });
+      }
+
+      const commission = isCommissionable ? round2(proceeds * rate) : 0;
 
       // Idempotent insert keyed on the RevenueCat event id.
       const eventId = event.id || `rc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;

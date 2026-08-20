@@ -209,7 +209,11 @@ export function EarningsTab({ profile }: { profile: Profile }) {
                 </div>
                 <div className="text-2xl font-extrabold text-amber-700">{dFmt(d.myCommission, currency)}</div>
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  {d.isPaid ? '✓ Paid' : 'Pending payout'}
+                  {d.isPaid ? '✓ Paid' : (() => {
+                    const [y, m] = period.split('-');
+                    const expectedPayoutDate = new Date(Number(y), Number(m), 10);
+                    return `Pending (Expected ${expectedPayoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})`;
+                  })()}
                 </div>
               </CardContent>
             </Card>
@@ -236,7 +240,14 @@ export function EarningsTab({ profile }: { profile: Profile }) {
           {/* Transactions — first-time purchases only */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold">Your subscribers ({tx.length})</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-amber-700" /> Your transactions ({tx.length})
+                </CardTitle>
+                <Button size="xs" variant="outline" onClick={refreshTransactions} disabled={transactionsLoading} className="h-7 text-xs">
+                  {transactionsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Refresh'}
+                </Button>
+              </div>
               <CardDescription className="text-xs">
                 First-time purchases attributed to you this month. Renewals and
                 cancellations are not shown (they earn no additional commission).
@@ -245,34 +256,46 @@ export function EarningsTab({ profile }: { profile: Profile }) {
             <CardContent>
               {tx.length === 0 ? (
                 <div className="text-sm text-muted-foreground py-6 text-center">
-                  No attributed subscribers yet this month.
+                  No transactions recorded yet this month.
                 </div>
               ) : (
-                <div className="divide-y divide-muted/40 text-sm">
-                  {tx.map(t => (
-                    <div key={t.id} className="flex items-center justify-between py-2.5">
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-semibold truncate">
-                          {t.ref ? `@${t.ref}` : 'Direct'}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(t.purchased_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-4 text-right flex-shrink-0">
-                        <span className="text-xs text-muted-foreground w-16">{dFmt(t.price, t.currency)}</span>
-                        <span className="font-bold text-amber-700 w-20">{dFmt(t.commission, t.currency)}</span>
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border/80 text-muted-foreground text-left">
+                        <th className="py-2 pr-3 font-semibold">Date</th>
+                        <th className="py-2 px-3 font-semibold">Type</th>
+                        <th className="py-2 px-3 font-semibold text-right">Price</th>
+                        <th className="py-2 pl-3 font-semibold text-right">Commission</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-muted/40">
+                      {tx.map(t => (
+                        <tr key={t.id} className="hover:bg-muted/30">
+                          <td className="py-2.5 pr-3 text-muted-foreground whitespace-nowrap">
+                            {new Date(t.purchased_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </td>
+                          <td className="py-2.5 px-3 text-muted-foreground uppercase text-[10px] font-mono">
+                            {t.event_type}
+                          </td>
+                          <td className="py-2.5 px-3 text-right font-medium">
+                            {dFmt(t.price, t.currency)}
+                          </td>
+                          <td className="py-2.5 pl-3 text-right font-bold text-amber-700">
+                            {dFmt(t.commission, t.currency)}
+                          </td>
+                        </tr>
+                      ))}
+                      <tr className="border-t-2 border-border font-bold bg-muted/20">
+                        <td colSpan={3} className="py-3 pr-3 text-right">Total:</td>
+                        <td className="py-3 pl-3 text-right text-amber-800 text-sm">
+                          {dFmt(tx.reduce((s, t) => s + Number(t.commission), 0), currency)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               )}
-              <Button
-                variant="ghost" size="sm" className="mt-3 text-xs"
-                onClick={refreshTransactions} disabled={transactionsLoading}
-              >
-                {transactionsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Refresh'}
-              </Button>
             </CardContent>
           </Card>
         </>

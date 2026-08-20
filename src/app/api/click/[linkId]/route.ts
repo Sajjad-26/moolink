@@ -49,5 +49,16 @@ export async function GET(
     if (error) console.error('Click tracking error:', error);
   });
 
-  return NextResponse.redirect(link.url);
+  let destinationUrl = link.url;
+  if (campaignRef) {
+    try {
+      const destUrlObj = new URL(destinationUrl);
+      if (!destUrlObj.searchParams.has('ref') && !destUrlObj.searchParams.has('affiliate_ref')) {
+        destUrlObj.searchParams.set('ref', campaignRef);
+        destinationUrl = destUrlObj.toString();
+      }
+    } catch {}
+  }
+
+  return NextResponse.redirect(destinationUrl);
 }
