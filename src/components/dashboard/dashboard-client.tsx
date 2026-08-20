@@ -98,7 +98,7 @@ export function DashboardClient({ profile }: { profile: Profile }) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push('/login');
+    window.location.href = '/';
   };
 
   const handleUpgradePro = async () => {
