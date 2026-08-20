@@ -47,7 +47,7 @@ export async function updateProfile(formData: FormData) {
       bio,
       username,
       theme: theme || 'classic-moo',
-      avatar_url: avatarUrl || null,
+      avatar_url: avatarUrl || '',
     })
     .eq('user_id', user.id);
 
