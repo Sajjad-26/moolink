@@ -24,7 +24,7 @@ export async function GET(
 
   // If promoting facera, forward to the dedicated auto-copy bridge page
   if (appSlug === 'facera') {
-    const bridgeUrl = new URL('/facera', request.url);
+    const bridgeUrl = new URL('/download-facera', request.url);
     if (creatorRef) bridgeUrl.searchParams.set('ref', creatorRef);
     return NextResponse.redirect(bridgeUrl.toString());
   }

@@ -106,8 +106,9 @@ export default async function ProfilePage({
   if (!profile || profile.is_archived) notFound();
 
   const links = await getLinks(profile.id);
+  const effectiveRef = ref || profile.username;
   // Fire-and-forget tracking (non-blocking) with campaign ref support
-  trackPageView(profile.id, ref);
+  trackPageView(profile.id, effectiveRef);
 
   const isPro = profile.is_pro || (() => {
     if (!profile.created_at) return false;
@@ -129,7 +130,7 @@ export default async function ProfilePage({
         backgroundPosition: 'center',
       }}
     >
-      {ref && <AutoCopyRef refTag={ref} />}
+      {effectiveRef && <AutoCopyRef refTag={effectiveRef} />}
       {/* Holstein patches — only on classic moo theme */}
       {(profile.theme === 'classic-moo' || !profile.theme) && (
         <div className="absolute inset-0 pointer-events-none cow-patch-bg" />
