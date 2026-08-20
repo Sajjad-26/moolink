@@ -7,23 +7,26 @@ import Image from 'next/image';
 import type { Profile, Link as LinkType } from '@/lib/types';
 import { headers } from 'next/headers';
 import { detectOS } from '@/lib/device';
-import { THEMES, type ThemeId } from '@/lib/themes';
+import { THEMES, getTheme, type ThemeId } from '@/lib/themes';
+import { HapticLink } from '@/components/haptic-link';
 
 export const revalidate = 60;
 
-async function trackPageView(profileId: string) {
+async function trackPageView(profileId: string, refTag?: string) {
   try {
     const supabase = await createClient();
     const headersList = await headers();
     const userAgent = headersList.get('user-agent') || '';
-    const referrer = headersList.get('referer') || null;
+    const rawReferrer = headersList.get('referer') || null;
     const country = headersList.get('x-vercel-ip-country') || null;
+
+    const finalReferrer = refTag ? `ref:${refTag}` : rawReferrer;
 
     await supabase.from('page_views').insert({
       profile_id: profileId,
       country,
       device_type: detectOS(userAgent),
-      referrer,
+      referrer: finalReferrer,
     });
   } catch {
     // never fail the page load
@@ -90,25 +93,45 @@ export async function generateMetadata({
 
 export default async function ProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ ref?: string }>;
 }) {
   const { username } = await params;
+  const { ref } = await searchParams;
   const profile = await getProfile(username);
   if (!profile) notFound();
 
   const links = await getLinks(profile.id);
-  await trackPageView(profile.id);
+  // Fire-and-forget tracking (non-blocking) with campaign ref support
+  trackPageView(profile.id, ref);
 
-  const theme = THEMES[(profile.theme as ThemeId) || 'classic-moo'] || THEMES['classic-moo'];
+  const isPro = profile.is_pro || (() => {
+    if (!profile.created_at) return false;
+    const ageInMs = Date.now() - new Date(profile.created_at).getTime();
+    return ageInMs <= 7 * 24 * 60 * 60 * 1000;
+  })();
+
+  // Fall back to basic theme if user lost Pro access but still has a Pro theme
+  const isNatureTheme = profile.theme?.startsWith('nature-') || profile.theme?.startsWith('http');
+  const effectiveTheme = !isPro && isNatureTheme ? 'classic-moo' : profile.theme;
+  const theme = getTheme(effectiveTheme);
 
   return (
-    <div className="min-h-screen flex flex-col items-center px-4 py-16 relative" style={{ background: theme.bg }}>
+    <div
+      className="min-h-screen flex flex-col items-center justify-between px-4 pt-12 pb-6 relative bg-no-repeat overflow-x-hidden max-w-full w-full"
+      style={{
+        background: theme.bg,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
       {/* Holstein patches — only on classic moo theme */}
       {(profile.theme === 'classic-moo' || !profile.theme) && (
         <div className="absolute inset-0 pointer-events-none cow-patch-bg" />
       )}
-      <div className="w-full max-w-md flex flex-col items-center relative z-10">
+      <div className="w-full max-w-md flex flex-col items-center relative z-10 flex-1 justify-start">
         {/* Avatar */}
         {profile.avatar_url ? (
           <Image
@@ -116,6 +139,7 @@ export default async function ProfilePage({
             alt={profile.display_name}
             width={96}
             height={96}
+            priority
             className="rounded-full border-4 shadow-xl"
             style={{ borderColor: theme.border }}
           />
@@ -128,35 +152,47 @@ export default async function ProfilePage({
           </div>
         )}
 
-        <h1 className="mt-4 text-2xl font-bold tracking-tight" style={{ color: theme.text }}>
+        <h1
+          className="mt-4 text-2xl font-bold tracking-tight text-center"
+          style={{
+            color: theme.text,
+            textShadow: theme.text === '#FFFFFF' || theme.text.toLowerCase().includes('fff')
+              ? '0 2px 8px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.5)'
+              : '0 1px 4px rgba(255,255,255,0.9), 0 0 2px rgba(255,255,255,1)',
+          }}
+        >
           {profile.display_name || username}
         </h1>
         {profile.bio && (
-          <p className="mt-2 text-center text-sm max-w-xs whitespace-pre-wrap break-words opacity-90" style={{ color: theme.sub }}>
+          <p
+            className="mt-2 text-center text-sm max-w-xs whitespace-pre-wrap break-words font-medium text-white"
+            style={{
+              color: '#FFFFFF',
+              textShadow: '0 1px 4px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5)',
+            }}
+          >
             {profile.bio}
           </p>
         )}
 
         <div className="w-full mt-8 space-y-3">
           {links.length === 0 && (
-            <p className="text-center text-sm py-8" style={{ color: theme.sub }}>No links yet 🐮</p>
+            <p
+              className="text-center text-sm py-8 font-medium opacity-85"
+              style={{ color: theme.sub || theme.text }}
+            >
+              No links yet 🐮
+            </p>
           )}
           {links.map((link) => {
             const social = getSocialConfig(link.icon);
             return (
-              <a
+              <HapticLink
                 key={link.id}
                 href={`/api/click/${link.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 w-full px-5 py-3.5 rounded-2xl border hover:-translate-y-0.5 transition-all duration-200 text-left"
+                className="flex items-center gap-3.5 w-full px-5 py-4 rounded-2xl ios-liquid-glass text-left font-semibold text-sm text-black"
                 style={{
-                  background: theme.cardBg || theme.card,
-                  backdropFilter: theme.backdropFilter || 'none',
-                  WebkitBackdropFilter: theme.backdropFilter || 'none',
-                  borderColor: theme.border,
-                  color: theme.text,
-                  boxShadow: theme.shadow || '0 4px 12px rgba(0,0,0,0.05)',
+                  color: '#000000',
                 }}
               >
                 {social ? (
@@ -172,21 +208,24 @@ export default async function ProfilePage({
                   <span className="text-xl flex-shrink-0">{getIcon(link.icon)}</span>
                 )}
                 <span className="font-semibold text-sm tracking-wide flex-1 truncate">{link.title}</span>
-              </a>
+              </HapticLink>
             );
           })}
         </div>
+      </div>
 
-        {!profile.is_pro && (
-          <Link
-            href="/"
-            className="mt-12 flex items-center gap-1.5 text-xs hover:opacity-80 transition-colors"
-            style={{ color: theme.sub }}
+      <footer className="relative z-10 mt-auto pt-10 pb-4 text-center">
+        {!isPro && (
+          <a
+            href="https://moolink.xyz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-100 transition-opacity text-white drop-shadow-md bg-black/30 backdrop-blur-xs px-3 py-1 rounded-full border border-white/15"
           >
             <span className="text-sm">🐮</span> Powered by MooLink
-          </Link>
+          </a>
         )}
-      </div>
+      </footer>
     </div>
   );
 }

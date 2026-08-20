@@ -1,0 +1,35 @@
+export function detectIconFromUrl(url: string): string {
+  if (!url) return 'link';
+  const lower = url.toLowerCase().trim();
+  if (lower.includes('play.google.com') || lower.includes('playstore') || lower.includes('google.play')) return 'playstore';
+  if (lower.includes('apps.apple.com') || lower.includes('itunes.apple.com') || lower.includes('appstore')) return 'appstore';
+  if (lower.includes('instagram.com') || lower.includes('instagr.am')) return 'instagram';
+  if (lower.includes('twitter.com') || lower.includes('x.com')) return 'twitter';
+  if (lower.includes('youtube.com') || lower.includes('youtu.be')) return 'youtube';
+  if (lower.includes('tiktok.com')) return 'tiktok';
+  if (lower.includes('github.com')) return 'github';
+  if (lower.includes('linkedin.com')) return 'linkedin';
+  if (lower.includes('discord.gg') || lower.includes('discord.com')) return 'discord';
+  if (lower.includes('twitch.tv')) return 'twitch';
+  if (lower.includes('spotify.com')) return 'spotify';
+  if (lower.includes('t.me') || lower.includes('telegram.me') || lower.includes('telegram.org')) return 'telegram';
+  if (lower.includes('wa.me') || lower.includes('whatsapp.com')) return 'whatsapp';
+  if (lower.includes('facebook.com') || lower.includes('fb.me')) return 'facebook';
+  if (lower.includes('reddit.com')) return 'reddit';
+  if (lower.includes('threads.net')) return 'threads';
+  if (lower.includes('substack.com')) return 'substack';
+  if (lower.includes('patreon.com')) return 'patreon';
+  if (lower.includes('pinterest.com') || lower.includes('pin.it')) return 'pinterest';
+  if (lower.includes('snapchat.com')) return 'snapchat';
+  if (lower.includes('medium.com')) return 'medium';
+  if (lower.includes('soundcloud.com')) return 'soundcloud';
+  if (lower.includes('steamcommunity.com') || lower.includes('steampowered.com')) return 'steam';
+  if (lower.includes('music.apple.com')) return 'applemusic';
+  if (lower.includes('notion.so') || lower.includes('notion.site')) return 'notion';
+  if (lower.includes('figma.com')) return 'figma';
+  if (lower.includes('dribbble.com')) return 'dribbble';
+  if (lower.includes('buymeacoffee.com') || lower.includes('ko-fi.com')) return 'buymeacoffee';
+  if (lower.includes('mailto:')) return 'email';
+  if (lower.includes('store') || lower.includes('shop')) return 'store';
+  return 'link';
+}

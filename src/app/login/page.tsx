@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useState, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { useAuthGuard } from '@/lib/hooks/use-auth-guard';
 import Link from 'next/link';
+import Image from 'next/image';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 function InvalidLinkNotice() {
@@ -63,10 +64,17 @@ export default function LoginPage() {
     setLoading(true);
     setError('');
 
+    const origin = typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000');
+
     const { error: authError } = await getSupabase().auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${origin}/auth/callback`,
+        queryParams: {
+          prompt: 'select_account',
+        },
       },
     });
 
@@ -77,10 +85,22 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-background cow-patch-bg">
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 bg-background cow-patch-bg relative">
+      {/* Top Back to Home Button */}
+      <div className="absolute top-6 left-6 z-10">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-all py-2 px-4 rounded-full border border-border bg-card/80 backdrop-blur-md shadow-xs hover:shadow-md hover:scale-105"
+        >
+          <ArrowLeft className="w-3.5 h-3.5 text-amber-700" /> Back to Home
+        </Link>
+      </div>
+
       <div className="mb-8 text-center">
-        <span className="text-5xl">🐮</span>
-        <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-foreground">MooLink</h1>
+        <Link href="/" className="inline-flex flex-col items-center hover:opacity-90 transition-opacity">
+          <Image src="/logo.png" alt="MooLink" width={64} height={64} className="rounded-2xl shadow-md border border-amber-900/10 mb-2" />
+          <h1 className="text-2xl font-black tracking-tight text-foreground">MooLink</h1>
+        </Link>
       </div>
 
       <Card className="w-full max-w-md border-border">
@@ -127,6 +147,9 @@ export default function LoginPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="password">Password</Label>
+                <Link href="/reset-password" className="text-xs text-amber-700 hover:underline font-semibold">
+                  Forgot password?
+                </Link>
               </div>
               <Input
                 id="password"

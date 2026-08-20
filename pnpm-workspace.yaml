@@ -1,6 +1,8 @@
 allowBuilds:
+  esbuild: true
   sharp: true
   unrs-resolver: true
+  workerd: true
 minimumReleaseAgeExclude:
   - recharts@3.10.1
   - shadcn@4.15.0

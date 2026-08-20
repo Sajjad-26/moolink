@@ -1,15 +1,16 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./liquid-glass.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-sans: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-heading: 'Plus Jakarta Sans', 'Inter', sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -120,16 +121,20 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+    box-sizing: border-box;
   }
   html {
     @apply font-sans;
+    width: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    width: 100%;
+    position: relative;
   }
 }
 
-/* Real Holstein cow patches — irregular, disconnected, varying shapes, subtle transparency */
+/* Holstein cow patches — lightweight CSS-only approach */
 .cow-patch-bg {
   background-color: #FFFAF2;
   position: relative;
@@ -137,13 +142,19 @@
 
 .cow-patch-bg::before {
   content: '';
-  position: fixed;
+  position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 900'%3E%3C!-- Long streaky patch top-left --%3E%3Cpath fill='%232D2A26' opacity='0.04' d='M-20-20c60 30 40 120 80 180c-20 50 10 100-30 160c50 40 30 90 20 150c-10 40 30 70 10 120l-30 50c-30-10-60 0-80-30c-10-20-30-60-10-90c-20-40 10-70-10-110c30-50-10-80 10-130c-20-60 20-100-10-160c30-40 10-80 20-130Z'/%3E%3C!-- Round blob mid-left --%3E%3Cellipse cx='120' cy='500' rx='90' ry='110' fill='%232D2A26' opacity='0.045' transform='rotate(-8 120 500)'/%3E%3C!-- Streaky patch right side long --%3E%3Cpath fill='%232D2A26' opacity='0.04' d='M1220-20c-40 50-30 130-80 180c30 60 10 140-40 190c50 30 30 100-10 160c40 50 30 130-20 180c50 40 20 110-20 150c30 50 50 30 70-10c40-50-10-120 30-160c-20-60 20-100 0-150c30-50-10-90 20-130c-40-60 0-110-10-170c30-50 10-110 30-150l10-10c-30-30-20-80 10-110Z'/%3E%3C!-- Round blob right side --%3E%3Cellipse cx='1080' cy='380' rx='100' ry='80' fill='%232D2A26' opacity='0.035' transform='rotate(12 1080 380)'/%3E%3C!-- Medium blob bottom-left --%3E%3Cellipse cx='200' cy='820' rx='120' ry='90' fill='%232D2A26' opacity='0.04' transform='rotate(-20 200 820)'/%3E%3C!-- Small irregular patch bottom center --%3E%3Cpath fill='%232D2A26' opacity='0.035' d='M500 850c30-10 60 0 90-30c-10 40 20 80-10 110c30 20 10 50-20 60c-40-10-30-50-60-70c-20 10-40-20-30-40c20-10 10-20 30-30z'/%3E%3C!-- Corner patch bottom-right --%3E%3Cpath fill='%232D2A26' opacity='0.04' d='M1000 700c50 30 40 80 80 120c-30 40 0 90-40 130c40 20 30 60-10 70c-40-10-50 30-70-10c-20-30 10-70-20-110c-30-40 10-80 0-130c30-20 10-60 40-80z'/%3E%3C!-- Small dot patches scattered --%3E%3Cellipse cx='350' cy='250' rx='35' ry='45' fill='%232D2A26' opacity='0.03' transform='rotate(25 350 250)'/%3E%3Cellipse cx='750' cy='150' rx='40' ry='55' fill='%232D2A26' opacity='0.03' transform='rotate(-15 750 150)'/%3E%3Cellipse cx='900' cy='650' rx='50' ry='40' fill='%232D2A26' opacity='0.035' transform='rotate(10 900 650)'/%3E%3Cellipse cx='80' cy='700' rx='45' ry='35' fill='%232D2A26' opacity='0.03' transform='rotate(-5 80 700)'/%3E%3C!-- Long thin patch --%3E%3Cpath fill='%232D2A26' opacity='0.03' d='M550 300c20-10 50 0 80-20c10 30-20 50-40 80c-30 10-50-30-60-20c-10 20 10-20 20-40z'/%3E%3C/svg%3E");
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background:
+    radial-gradient(ellipse 180px 220px at 8% 12%, rgba(45,42,38,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 140px 180px at 85% 25%, rgba(45,42,38,0.035) 0%, transparent 70%),
+    radial-gradient(ellipse 200px 160px at 15% 65%, rgba(45,42,38,0.04) 0%, transparent 70%),
+    radial-gradient(ellipse 160px 200px at 90% 55%, rgba(45,42,38,0.035) 0%, transparent 70%),
+    radial-gradient(ellipse 120px 150px at 45% 85%, rgba(45,42,38,0.03) 0%, transparent 70%),
+    radial-gradient(ellipse 100px 130px at 70% 80%, rgba(45,42,38,0.035) 0%, transparent 70%),
+    radial-gradient(ellipse 60px 80px at 30% 30%, rgba(45,42,38,0.025) 0%, transparent 70%),
+    radial-gradient(ellipse 70px 90px at 60% 15%, rgba(45,42,38,0.025) 0%, transparent 70%);
   pointer-events: none;
+  contain: strict;
 }
 
 /* Cards stay clean — no patches */

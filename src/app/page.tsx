@@ -1,127 +1,23 @@
 import Link from 'next/link';
+import Image from 'next/image';
+import { headers } from 'next/headers';
 import { Button } from '@/components/ui/button';
 import {
   ArrowRight, BarChart3, Zap, Palette, Shield,
   Sparkles, Check, X, ChevronDown, Globe, Users,
   MousePointerClick, Smartphone, Star, TrendingUp,
 } from 'lucide-react';
-
-// ─── Pricing ──────────────────────────────────────────────────────────────────
-const PLANS = [
-  {
-    name: 'Free',
-    price: '$0',
-    period: 'forever',
-    description: 'Perfect to get started with your link-in-bio.',
-    highlight: false,
-    cta: 'Start for Free',
-    href: '/signup',
-    features: [
-      { text: 'Up to 5 links', included: true },
-      { text: 'Basic analytics (7 days)', included: true },
-      { text: '5 themes', included: true },
-      { text: 'MooLink subdomain', included: true },
-      { text: 'Click tracking', included: true },
-      { text: 'Remove MooLink branding', included: false },
-      { text: 'Unlimited links', included: false },
-      { text: 'Full analytics suite', included: false },
-    ],
-  },
-  {
-    name: 'Pro',
-    price: '$3.99',
-    period: 'per month',
-    sub: 'billed annually ($47.88/yr) · $5.99 monthly',
-    description: 'Everything you need to grow your audience.',
-    highlight: true,
-    badge: 'Best Value',
-    cta: 'Start Free Trial',
-    href: '/signup?plan=pro',
-    features: [
-      { text: 'Unlimited links', included: true },
-      { text: 'Full analytics (countries, devices, referrers)', included: true },
-      { text: 'All 18 themes', included: true },
-      { text: 'MooLink subdomain (custom domain coming soon)', included: true },
-      { text: 'Click & page-view tracking', included: true },
-      { text: 'Remove MooLink branding', included: true },
-      { text: 'OS & browser data', included: true },
-      { text: 'Priority email support', included: true },
-    ],
-  },
-];
-
-// ─── 4-column comparison ──────────────────────────────────────────────────────
-// Columns: Feature | MooLink Free | MooLink Pro | Other Platforms Pro
-type ColVal = { label: string; positive: boolean };
-type CompRow = {
-  feature: string;
-  free: ColVal;
-  pro: ColVal;
-  others: ColVal;
-};
-
-const COMPARISON: CompRow[] = [
-  {
-    feature: 'Price (Annual)',
-    free:   { label: '$0 / mo',        positive: true  },
-    pro:    { label: '$3.99 / mo',     positive: true  },
-    others: { label: '$9 – $24 / mo',  positive: false },
-  },
-  {
-    feature: 'Links',
-    free:   { label: 'Up to 5',        positive: true  },
-    pro:    { label: 'Unlimited',       positive: true  },
-    others: { label: 'Limited on free', positive: false },
-  },
-  {
-    feature: 'Analytics',
-    free:   { label: '7-day basics',   positive: true  },
-    pro:    { label: 'Full suite',     positive: true  },
-    others: { label: 'Locked behind paid', positive: false },
-  },
-  {
-    feature: 'Themes',
-    free:   { label: '5 themes',       positive: true  },
-    pro:    { label: 'All 18',         positive: true  },
-    others: { label: '2–5 on free',   positive: false },
-  },
-  {
-    feature: 'Country & Device data',
-    free:   { label: '—',              positive: false },
-    pro:    { label: '✓ Included',     positive: true  },
-    others: { label: 'Premium only',   positive: false },
-  },
-  {
-    feature: 'Ads on your page',
-    free:   { label: 'Never',          positive: true  },
-    pro:    { label: 'Never',          positive: true  },
-    others: { label: 'Yes on free',    positive: false },
-  },
-  {
-    feature: 'Smart icon detection',
-    free:   { label: '✓ All plans',    positive: true  },
-    pro:    { label: '✓ All plans',    positive: true  },
-    others: { label: 'Limited',        positive: false },
-  },
-  {
-    feature: 'Page load speed',
-    free:   { label: '< 50ms',         positive: true  },
-    pro:    { label: '< 50ms',         positive: true  },
-    others: { label: 'Slower (JS-heavy)', positive: false },
-  },
-];
-
 // ─── Features ─────────────────────────────────────────────────────────────────
 const FEATURES = [
   {
     icon: BarChart3,
-    title: 'Deep Analytics',
+    title: 'Deep Real-Time Analytics',
     desc: 'See exactly where your audience comes from — countries, devices, operating systems, referrers, and click-through rates. All in real time.',
   },
   {
     icon: Palette,
-    title: '18 Beautiful Themes',
-    desc: 'Pure white to AMOLED black, vibrant neons to soft pastels. Switch your whole page aesthetic in one tap.',
+    title: 'Premium Themes',
+    desc: 'Authentic iOS Liquid Glassmorphism, ultra-crisp Unsplash HD nature wallpapers, and curated aesthetics. Transform your link page in seconds.',
   },
   {
     icon: Zap,
@@ -149,7 +45,7 @@ const FEATURES = [
 const FAQS = [
   {
     q: 'Is the free plan really free forever?',
-    a: 'Yes. No credit card required, no trial period. You get 5 links, 7-day analytics, and 5 themes — free, forever.',
+    a: 'Yes! No credit card required. Every new user gets a 7-day Pro Trial automatically on signup, after which the free plan includes up to 3 links.',
   },
   {
     q: 'How does MooLink compare to other link-in-bio tools?',
@@ -192,15 +88,111 @@ const TESTIMONIALS = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const headersList = await headers();
+  const country = headersList.get('x-vercel-ip-country') || '';
+  const isIndia = country === 'IN';
+
+  const priceSymbol = isIndia ? '₹' : '$';
+  const proPrice = isIndia ? '199' : '2.99';
+  const competitorPrice = isIndia ? '₹750+' : '$9–$24';
+
+  const PLANS = [
+    {
+      name: 'Free',
+      price: `${priceSymbol}0`,
+      period: 'forever',
+      description: 'Perfect to get started with your link-in-bio.',
+      highlight: false,
+      cta: 'Start for Free',
+      href: '/signup',
+      features: [
+        { text: 'Up to 3 links', included: true },
+        { text: 'Basic analytics (7 days)', included: true },
+        { text: 'Selected themes', included: true },
+        { text: 'MooLink subdomain', included: true },
+        { text: 'Click tracking', included: true },
+        { text: 'Remove MooLink branding', included: false },
+        { text: 'Unlimited links', included: false },
+        { text: 'Full analytics suite', included: false },
+      ],
+    },
+    {
+      name: 'Pro',
+      price: `${priceSymbol}${proPrice}`,
+      period: 'per month',
+      sub: 'Includes 7-day Free Pro Trial on signup · Cancel anytime',
+      description: 'Everything you need to grow your audience.',
+      highlight: true,
+      badge: 'Best Value',
+      cta: 'Start 7-Day Free Trial',
+      href: '/signup?plan=pro',
+      features: [
+        { text: 'Unlimited links', included: true },
+        { text: 'Full analytics (countries, devices, referrers)', included: true },
+        { text: 'Premium Themes', included: true },
+        { text: 'MooLink subdomain (custom domain coming soon)', included: true },
+        { text: 'Click & page-view tracking', included: true },
+        { text: 'Remove MooLink branding', included: true },
+        { text: 'OS & browser data', included: true },
+        { text: 'Priority email support', included: true },
+      ],
+    },
+  ];
+
+  const COMPARISON = [
+    {
+      feature: 'Price',
+      free:   { label: `${priceSymbol}0 / mo`,            positive: true  },
+      pro:    { label: `${priceSymbol}${proPrice} / mo`, positive: true  },
+      others: { label: `${competitorPrice} / mo`,     positive: false },
+    },
+    {
+      feature: 'Links',
+      free:   { label: 'Up to 3',        positive: true  },
+      pro:    { label: 'Unlimited',       positive: true  },
+      others: { label: 'Limited on free', positive: false },
+    },
+    {
+      feature: 'Analytics',
+      free:   { label: '7-day basics',   positive: true  },
+      pro:    { label: 'Full suite',     positive: true  },
+      others: { label: 'Locked behind paid', positive: false },
+    },
+    {
+      feature: 'Themes',
+      free:   { label: 'Selected themes', positive: true  },
+      pro:    { label: 'Premium Themes', positive: true  },
+      others: { label: 'Basic templates', positive: false },
+    },
+    {
+      feature: 'Country & Device data',
+      free:   { label: '—',              positive: false },
+      pro:    { label: '✓ Included',     positive: true  },
+      others: { label: 'Premium only',   positive: false },
+    },
+    {
+      feature: 'Ads on your page',
+      free:   { label: 'Never',          positive: true  },
+      pro:    { label: 'Never',          positive: true  },
+      others: { label: 'Yes on free',    positive: false },
+    },
+    {
+      feature: 'Speed',
+      free:   { label: '< 50ms',         positive: true  },
+      pro:    { label: '< 50ms',         positive: true  },
+      others: { label: 'Slower (JS-heavy)', positive: false },
+    },
+  ];
+
   return (
     <div className="min-h-screen cow-patch-bg">
 
       {/* ── NAV ── */}
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">🐮</span>
+          <div className="flex items-center gap-2.5">
+            <Image src="/logo.png" alt="MooLink Logo" width={32} height={32} className="rounded-lg shadow-xs" />
             <span className="text-xl font-extrabold tracking-tight text-foreground">MooLink</span>
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
@@ -248,7 +240,7 @@ export default function HomePage() {
           </Link>
           <a href="#pricing">
             <Button size="lg" variant="outline" className="h-12 px-8 w-full sm:w-auto">
-              See Pricing
+              View Pricing
             </Button>
           </a>
         </div>
@@ -263,7 +255,7 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { value: '50+',   label: 'Auto-detected platforms' },
+              { value: '30+',   label: 'Auto-detected platforms' },
               { value: '18',    label: 'Beautiful themes' },
               { value: '$0',    label: 'To get started' },
               { value: '<50ms', label: 'Page load time' },
@@ -320,7 +312,7 @@ export default function HomePage() {
                 {/* MooLink Free */}
                 <th className="text-center p-4 bg-amber-50/40 w-[24%] align-bottom">
                   <div className="font-semibold text-foreground text-xs uppercase tracking-wide mb-1 whitespace-nowrap">MooLink Free</div>
-                  <div className="text-xl font-extrabold text-amber-700">$0</div>
+                  <div className="text-xl font-extrabold text-amber-700">{priceSymbol}0</div>
                   <div className="text-[11px] text-muted-foreground font-normal">forever</div>
                 </th>
 
@@ -332,14 +324,14 @@ export default function HomePage() {
                     </span>
                   </div>
                   <div className="font-bold text-amber-100 text-xs uppercase tracking-wide mb-1 whitespace-nowrap">MooLink Pro</div>
-                  <div className="text-xl font-extrabold text-white">$3.99</div>
+                  <div className="text-xl font-extrabold text-white">{priceSymbol}{proPrice}</div>
                   <div className="text-[11px] text-amber-200 font-normal">per month</div>
                 </th>
 
                 {/* Other platforms Pro */}
                 <th className="text-center p-4 bg-muted/40 w-[24%] align-bottom">
                   <div className="font-semibold text-muted-foreground text-xs uppercase tracking-wide mb-1 whitespace-nowrap">Other Platforms</div>
-                  <div className="text-xl font-extrabold text-muted-foreground">$9–$24</div>
+                  <div className="text-xl font-extrabold text-muted-foreground">{competitorPrice}</div>
                   <div className="text-[11px] text-muted-foreground font-normal">per month</div>
                 </th>
               </tr>
@@ -545,7 +537,9 @@ export default function HomePage() {
         <div className="rounded-3xl bg-gradient-to-br from-amber-800 to-amber-900 p-10 md:p-16 text-white text-center relative overflow-hidden shadow-2xl shadow-amber-900/30">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.08),transparent_60%)]" />
           <div className="relative z-10">
-            <span className="text-4xl mb-5 block">🐮</span>
+            <div className="flex justify-center mb-5">
+              <Image src="/logo.png" alt="MooLink Logo" width={64} height={64} className="rounded-2xl shadow-lg border border-white/20" />
+            </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold mb-4">
               Your link-in-bio should cost less than a coffee.
             </h2>
@@ -559,7 +553,7 @@ export default function HomePage() {
                 </Button>
               </Link>
               <a href="#pricing">
-                <Button size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10 h-12 px-8 w-full sm:w-auto">
+                <Button size="lg" className="bg-amber-950/80 border border-amber-300/40 text-amber-100 hover:bg-white hover:text-amber-950 text-base font-bold h-12 px-8 w-full sm:w-auto backdrop-blur-md transition-all shadow-md">
                   View Pricing
                 </Button>
               </a>
@@ -574,8 +568,8 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-10">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-xl">🐮</span>
+              <div className="flex items-center gap-2.5 mb-3">
+                <Image src="/logo.png" alt="MooLink Logo" width={28} height={28} className="rounded-md shadow-xs" />
                 <span className="font-extrabold text-foreground">MooLink</span>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">
@@ -599,16 +593,26 @@ export default function HomePage() {
                 <li><Link href="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link></li>
               </ul>
             </div>
+            <div>
+              <div className="font-semibold text-foreground text-sm mb-3">Support</div>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>
+                  <a href="mailto:support@moolink.xyz" className="hover:text-foreground transition-colors font-mono text-xs text-amber-800 font-semibold">
+                    support@moolink.xyz
+                  </a>
+                </li>
+              </ul>
+            </div>
           </div>
 
           <div className="border-t border-border/60 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
             <span>© {new Date().getFullYear()} MooLink. All rights reserved.</span>
             <div className="flex items-center gap-4">
-              <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
-              <span className="flex items-center gap-1">
+              <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
+              <Link href="/global" className="flex items-center gap-1 hover:text-foreground transition-colors">
                 <Globe className="w-3 h-3" /> Global
-              </span>
+              </Link>
             </div>
           </div>
         </div>

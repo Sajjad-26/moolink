@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.facera.faceai",
+      "sha256_cert_fingerprints": [
+        "4E:14:43:A6:22:43:3D:C2:0C:E6:61:44:4A:3A:1E:A3:97:14:53:AA:83:D6:96:6F:83:E6:3A:33:37:65:8B:25"
+      ]
+    }
+  }
+]
