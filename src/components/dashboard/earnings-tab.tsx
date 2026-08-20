@@ -24,7 +24,7 @@ export function EarningsTab({ profile }: { profile: Profile }) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [copiedLink, setCopiedLink] = useState(false);
 
-  const promoUrl = `https://moolink.xyz/facera?ref=${profile.username}`;
+  const promoUrl = `https://moolink.xyz/${profile.username}?ref=${profile.username}`;
 
   const copyPromoLink = () => {
     navigator.clipboard.writeText(promoUrl);
@@ -170,7 +170,7 @@ export function EarningsTab({ profile }: { profile: Profile }) {
                 </span>
               </CardTitle>
               <CardDescription className="text-xs">
-                When users click this link, their clipboard copies your code <span className="font-semibold text-foreground">@{profile.username}</span> and redirects them to download Facera.
+                When users click this link, their clipboard copies your code <span className="font-semibold text-foreground">@{profile.username}</span> and they land on your profile.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0 space-y-2">
