@@ -248,10 +248,6 @@ export function EarningsTab({ profile }: { profile: Profile }) {
                   {transactionsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Refresh'}
                 </Button>
               </div>
-              <CardDescription className="text-xs">
-                First-time purchases attributed to you this month. Renewals and
-                cancellations are not shown (they earn no additional commission).
-              </CardDescription>
             </CardHeader>
             <CardContent>
               {tx.length === 0 ? (

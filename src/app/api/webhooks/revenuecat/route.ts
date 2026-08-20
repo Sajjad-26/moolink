@@ -9,10 +9,9 @@ const supabaseAdmin = createClient(
 // Commission is earned only on the FIRST paid transaction per subscriber
 // (INITIAL_PURCHASE = new subscription; NON_RENEWING_PURCHASE = one-time),
 // NOT on renewals. Each credited subscriber is worth a flat 30% of net proceeds.
-// TEMPORARY: Allowing all transaction types (including RENEWAL and TRANSFER) for iOS testing
-const COMMISSIONABLE_EVENTS = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE', 'RENEWAL', 'TRANSFER', 'PRODUCT_CHANGE']);
+const COMMISSIONABLE_EVENTS = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 const DEFAULT_COMMISSION_RATE = 0.30;
-const SALE_EVENTS = new Set(['INITIAL_PURCHASE', 'RENEWAL', 'NON_RENEWING_PURCHASE', 'TEST', 'PRODUCT_CHANGE', 'TRANSFER']);
+const SALE_EVENTS = new Set(['INITIAL_PURCHASE', 'RENEWAL', 'NON_RENEWING_PURCHASE', 'TEST', 'PRODUCT_CHANGE']);
 
 function round2(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;

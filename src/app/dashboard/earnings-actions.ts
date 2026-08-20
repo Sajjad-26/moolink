@@ -124,7 +124,7 @@ export async function getCommissionData(period: string): Promise<CommissionData 
     .from('affiliate_sales')
     .select('profile_id, price, proceeds, commission')
     .eq('period', period)
-    .in('event_type', ['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE', 'RENEWAL', 'TRANSFER', 'PRODUCT_CHANGE']);
+    .in('event_type', ['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
 
   const salesByProfile: Record<string, { count: number; revenue: number; commission: number }> = {};
   for (const s of sales ?? []) {
@@ -249,8 +249,7 @@ export async function getMyTransactions(period: string): Promise<MyTransaction[]
     .eq('profile_id', myProfile.id)
     .gte('purchased_at', startIso)
     .lt('purchased_at', endIso)
-    // First-time purchases only — renewals/cancellations/expirations are hidden. (TEMP OVERRIDE for iOS testing)
-    .in('event_type', ['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE', 'RENEWAL', 'TRANSFER', 'PRODUCT_CHANGE'])
+    .in('event_type', ['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE'])
     .order('purchased_at', { ascending: false });
 
   if (error) {
