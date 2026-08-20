@@ -323,7 +323,7 @@ export function AdminPage() {
                       <span className="text-xs text-muted-foreground">
                         {(() => {
                           const [y, m] = p.period.split('-');
-                          const expectedPayoutDate = new Date(Number(y), Number(m), 10);
+                          const expectedPayoutDate = new Date(Number(y), Number(m) + 1, 10);
                           return `(Expected payout: ${expectedPayoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})`;
                         })()}
                       </span>

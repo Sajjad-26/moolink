@@ -211,7 +211,7 @@ export function EarningsTab({ profile }: { profile: Profile }) {
                 <div className="text-[10px] text-muted-foreground mt-0.5">
                   {d.isPaid ? '✓ Paid' : (() => {
                     const [y, m] = period.split('-');
-                    const expectedPayoutDate = new Date(Number(y), Number(m), 10);
+                    const expectedPayoutDate = new Date(Number(y), Number(m) + 1, 10);
                     return `Pending (Expected ${expectedPayoutDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })})`;
                   })()}
                 </div>

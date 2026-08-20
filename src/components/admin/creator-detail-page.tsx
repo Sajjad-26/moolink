@@ -180,38 +180,7 @@ export function CreatorDetailPage({ creator }: { creator: Profile }) {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Links List */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold flex items-center gap-2">
-                <Link2 className="w-4 h-4 text-amber-700" /> Links
-              </CardTitle>
-              <CardDescription className="text-xs">
-                All links currently on their public profile.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.links.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-2">No links added.</p>
-              ) : (
-                <div className="space-y-3">
-                  {data.links.map((link: any) => (
-                    <div key={link.id} className="p-3 bg-muted/30 rounded-lg border border-border flex flex-col gap-1">
-                      <div className="font-semibold text-sm flex items-center gap-2">
-                        {link.title}
-                        {!link.is_active && <span className="text-[9px] uppercase px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground font-bold">Hidden</span>}
-                      </div>
-                      <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-xs text-amber-700 hover:underline truncate">
-                        {link.url}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
+        <div className="grid grid-cols-1 gap-6">
           {/* Transactions */}
           <Card>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
