@@ -105,18 +105,6 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-semibold flex items-center gap-1.5">
-                <ImageIcon className="w-4 h-4 text-amber-600" /> Profile Picture URL (Optional)
-              </label>
-              <Input
-                placeholder="https://example.com/avatar.jpg"
-                type="url"
-                value={formData.avatar_url}
-                onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-              />
-            </div>
-
             <Button type="submit" className="w-full h-12 text-base font-bold bg-amber-700 hover:bg-amber-800" disabled={loading}>
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Continue'}
             </Button>
