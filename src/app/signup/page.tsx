@@ -76,7 +76,7 @@ export default function SignupPage() {
       options: {
         redirectTo: `${origin}/auth/callback`,
         queryParams: {
-          prompt: 'select_account',
+          prompt: 'consent select_account',
         },
       },
     });

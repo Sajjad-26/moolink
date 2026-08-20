@@ -203,7 +203,7 @@ export default async function HomePage() {
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/login">
-              <Button variant="ghost" className="text-muted-foreground hover:text-foreground text-sm hidden sm:inline-flex">
+              <Button variant="ghost" className="text-muted-foreground hover:text-foreground text-sm">
                 Sign In
               </Button>
             </Link>
@@ -238,11 +238,11 @@ export default async function HomePage() {
               Start for Free <ArrowRight className="w-4 h-4" />
             </Button>
           </Link>
-          <a href="#pricing">
-            <Button size="lg" variant="outline" className="h-12 px-8 w-full sm:w-auto">
-              View Pricing
+          <Link href="/login">
+            <Button size="lg" variant="outline" className="h-12 px-8 w-full sm:w-auto font-semibold">
+              Login to Dashboard
             </Button>
-          </a>
+          </Link>
         </div>
 
         <p className="text-xs text-muted-foreground">
