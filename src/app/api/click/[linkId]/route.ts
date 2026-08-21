@@ -38,16 +38,17 @@ export async function GET(
 
   const finalReferrer = campaignRef ? `ref:${campaignRef}` : rawReferrer;
 
-  // Fire-and-forget tracking
-  supabase.from('click_events').insert({
+  // Await tracking insert so it completes before edge response
+  const { error: clickErr } = await supabase.from('click_events').insert({
     link_id: linkId,
     profile_id: link.profile_id,
     country,
     device_type: deviceType,
     referrer: finalReferrer,
-  }).then(({ error }) => {
-    if (error) console.error('Click tracking error:', error);
   });
+  if (clickErr) {
+    console.error('Click tracking error:', clickErr.message);
+  }
 
   let destinationUrl = link.url;
   if (campaignRef) {

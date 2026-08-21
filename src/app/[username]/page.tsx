@@ -115,8 +115,8 @@ export default async function ProfilePage({
 
   const links = await getLinks(profile.id);
   const effectiveRef = ref || profile.username;
-  // Fire-and-forget tracking (non-blocking) with campaign ref support
-  trackPageView(profile.id, effectiveRef);
+  // Ensure tracking completes reliably
+  await trackPageView(profile.id, effectiveRef);
 
   const isPro = profile.is_pro || (() => {
     if (!profile.created_at) return false;

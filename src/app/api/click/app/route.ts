@@ -29,17 +29,20 @@ export async function GET(request: NextRequest) {
     .ilike('username', cleaned)
     .maybeSingle();
 
-  if (profile?.is_affiliate) {
+  if (profile) {
     const userAgent = request.headers.get('user-agent') || '';
     // Await so the insert completes before the response in the edge runtime.
-    await supabase.from('click_events').insert({
+    const { error: appClickErr } = await supabase.from('click_events').insert({
       link_id: null,
       profile_id: profile.id,
       app_slug: appSlug,
       referrer: ref,
       country: request.headers.get('x-vercel-ip-country') || null,
       device_type: detectOS(userAgent),
-    }).then(() => {}, () => {});
+    });
+    if (appClickErr) {
+      console.error('App click tracking error:', appClickErr.message);
+    }
     return NextResponse.json({ ok: true, counted: true, profileId: profile.id });
   }
 
