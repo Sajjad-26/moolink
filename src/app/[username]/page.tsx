@@ -102,6 +102,14 @@ export default async function ProfilePage({
 }) {
   const { username } = await params;
   const { ref } = await searchParams;
+
+  // Facera promo links: redirect to the download bridge that properly tracks creator clicks
+  if (username.toLowerCase() === 'facera') {
+    const { redirect } = await import('next/navigation');
+    const bridgeUrl = ref ? `/download-facera?ref=${encodeURIComponent(ref)}` : '/download-facera';
+    redirect(bridgeUrl);
+  }
+
   const profile = await getProfile(username);
   if (!profile || profile.is_archived) notFound();
 
