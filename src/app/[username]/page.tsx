@@ -103,11 +103,11 @@ export default async function ProfilePage({
   const { username } = await params;
   const { ref } = await searchParams;
 
-  // Facera promo links: redirect directly to the app store route
+  // Facera promo links: redirect to the download bridge that properly tracks creator clicks
   if (username.toLowerCase() === 'facera') {
     const { redirect } = await import('next/navigation');
-    const targetUrl = ref ? `/app/facera?ref=${encodeURIComponent(ref)}` : '/app/facera';
-    redirect(targetUrl);
+    const bridgeUrl = ref ? `/download-facera?ref=${encodeURIComponent(ref)}` : '/download-facera';
+    redirect(bridgeUrl);
   }
 
   const profile = await getProfile(username);
