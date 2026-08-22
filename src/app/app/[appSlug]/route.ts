@@ -22,12 +22,6 @@ export async function GET(
   const url = new URL(request.url);
   const creatorRef = url.searchParams.get('ref') || url.searchParams.get('affiliate_ref');
 
-  // If promoting facera, forward to the dedicated auto-copy bridge page
-  if (appSlug === 'facera') {
-    const bridgeUrl = new URL('/download-facera', request.url);
-    if (creatorRef) bridgeUrl.searchParams.set('ref', creatorRef);
-    return NextResponse.redirect(bridgeUrl.toString());
-  }
 
   // Unknown app → send to homepage (defensive).
   if (!APP_STORE_URLS[appSlug]) {
