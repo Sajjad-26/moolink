@@ -7,9 +7,9 @@ const supabaseAdmin = createClient(
 );
 
 // Commission is earned only on the FIRST paid transaction per subscriber
-// (INITIAL_PURCHASE = new subscription; NON_RENEWING_PURCHASE = one-time),
-// NOT on renewals. Each credited subscriber is worth a flat 30% of net proceeds.
-const COMMISSIONABLE_EVENTS = new Set(['INITIAL_PURCHASE', 'NON_RENEWING_PURCHASE']);
+// (INITIAL_PURCHASE = new subscription).
+// NOT on renewals or one-time non-renewing purchases.
+const COMMISSIONABLE_EVENTS = new Set(['INITIAL_PURCHASE']);
 const DEFAULT_COMMISSION_RATE = 0.30;
 const SALE_EVENTS = new Set(['INITIAL_PURCHASE', 'RENEWAL', 'NON_RENEWING_PURCHASE', 'TEST', 'PRODUCT_CHANGE']);
 

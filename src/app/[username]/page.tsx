@@ -5,35 +5,14 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Profile, Link as LinkType } from '@/lib/types';
-import { headers } from 'next/headers';
 import { detectOS } from '@/lib/device';
 import { THEMES, getTheme, type ThemeId } from '@/lib/themes';
 import { HapticLink } from '@/components/haptic-link';
 
 import { AutoCopyRef } from '@/components/auto-copy-ref';
+import { ViewTracker } from '@/components/profile/view-tracker';
 
 export const revalidate = 60;
-
-async function trackPageView(profileId: string, refTag?: string) {
-  try {
-    const supabase = await createClient();
-    const headersList = await headers();
-    const userAgent = headersList.get('user-agent') || '';
-    const rawReferrer = headersList.get('referer') || null;
-    const country = headersList.get('x-vercel-ip-country') || null;
-
-    const finalReferrer = refTag ? `ref:${refTag}` : rawReferrer;
-
-    await supabase.from('page_views').insert({
-      profile_id: profileId,
-      country,
-      device_type: detectOS(userAgent),
-      referrer: finalReferrer,
-    });
-  } catch {
-    // never fail the page load
-  }
-}
 
 async function getProfile(username: string) {
   const supabase = await createClient();
@@ -110,8 +89,6 @@ export default async function ProfilePage({
 
   const links = await getLinks(profile.id);
   const effectiveRef = ref || profile.username;
-  // Ensure tracking completes reliably
-  await trackPageView(profile.id, effectiveRef);
 
   const isPro = profile.is_pro || (() => {
     if (!profile.created_at) return false;
@@ -134,6 +111,7 @@ export default async function ProfilePage({
       }}
     >
       {effectiveRef && <AutoCopyRef refTag={effectiveRef} />}
+      <ViewTracker profileId={profile.id} refTag={effectiveRef} />
       {/* Holstein patches — only on classic moo theme */}
       {(profile.theme === 'classic-moo' || !profile.theme) && (
         <div className="absolute inset-0 pointer-events-none cow-patch-bg" />
@@ -222,16 +200,14 @@ export default async function ProfilePage({
       </div>
 
       <footer className="relative z-10 mt-auto pt-10 pb-4 text-center">
-        {!isPro && (
-          <a
-            href="https://moolink.xyz"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-100 transition-opacity text-white drop-shadow-md bg-black/30 backdrop-blur-xs px-3 py-1 rounded-full border border-white/15"
-          >
-            <span className="text-sm">🐮</span> Powered by MooLink
-          </a>
-        )}
+        <a
+          href="https://moolink.xyz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 text-xs font-semibold hover:opacity-100 transition-opacity text-white drop-shadow-md bg-black/30 backdrop-blur-xs px-3 py-1 rounded-full border border-white/15"
+        >
+          <span className="text-sm">🐮</span> Powered by MooLink
+        </a>
       </footer>
     </div>
   );
